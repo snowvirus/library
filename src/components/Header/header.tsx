@@ -29,7 +29,9 @@ const Header = () => {
               <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 About
               </a>
-
+              <a href="/admin" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors mr-4">
+                Admin
+              </a>
               <a href="/account" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 My Account
               </a>
@@ -67,6 +69,9 @@ const Header = () => {
               </a>
               <a href="/about" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600">
                 About
+              </a>
+              <a href="/admin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600">
+                Admin
               </a>
               <a href="/account" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600">
                 My Account
