@@ -1,3 +1,4 @@
+import { JWTPayload } from 'jose';
 export interface User {
         _id: string,
         username: string,
@@ -12,4 +13,12 @@ export interface User {
         updatedAt: number,
         lastLogin?: number,
         _creationTime:number,
+}
+
+
+export interface SessionPayload extends JWTPayload {
+  userId: string;
+  role: string; 
+  isVerified: boolean;
+  expiresAt:Date
 }
