@@ -246,7 +246,7 @@ clearForm()
   return (
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome to <span className="text-dark" >Shop</span><span className="text-gold">Cheap</span> </h1>
+        <h1 className="text-2xl font-bold">Welcome to <span className="text-dark" >City</span><span className="text-gold">Library</span> </h1>
         <p className="text-balance text-sm text-muted-foreground">
           Enter your your Details below to create to your account
         </p>

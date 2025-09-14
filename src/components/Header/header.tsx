@@ -33,12 +33,12 @@ const Header = () => {
               <a href="/account" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 My Account
               </a>
-              <a href="/signin">
+              <a href="/sign-in">
                 <Button variant="outline" className="mr-2 bg-transparent">
                   Sign In
                 </Button>
               </a>
-              <a href="/signup">
+              <a href="/sign-up">
                 <Button>Join Now</Button>
               </a>
             </div>
