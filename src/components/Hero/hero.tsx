@@ -106,7 +106,7 @@ export default function LibraryLanding() {
     {
       date: "Dec 15",
       title: "Author Meet & Greet",
-      description: "Meet bestselling author Sarah Johnson",
+      description: "Meet bestselling author Shivan Abenaitwe",
       time: "6:00 PM",
     },
     {
@@ -166,13 +166,17 @@ export default function LibraryLanding() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-3">
-                Browse Catalog
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-3 bg-transparent">
-                Take Virtual Tour
-              </Button>
+              <a href="/catalog">
+                <Button size="lg" className="text-lg px-8 py-3">
+                  Browse Catalog
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </a>
+              <a href="/services">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-3 bg-transparent">
+                  Our Services
+                </Button>
+              </a>
             </div>
           </div>
         </div>
@@ -237,20 +241,28 @@ export default function LibraryLanding() {
           </div>
 
           <div className="text-center mt-8">
-            <Button variant="outline" size="lg">
-              View Full Catalog
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <a href="/catalog">
+              <Button variant="outline" size="lg">
+                View Full Catalog
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </a>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Our Services</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">Everything you need for learning and research</p>
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">Everything you need for learning and research</p>
+            <a href="/services">
+              <Button variant="outline" size="lg">
+                Explore All Services
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </a>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -308,10 +320,12 @@ export default function LibraryLanding() {
           </div>
 
           <div className="text-center mt-8">
-            <Button variant="outline" size="lg">
-              View All Events
-              <Calendar className="ml-2 h-5 w-5" />
-            </Button>
+            <a href="/events">
+              <Button variant="outline" size="lg">
+                View All Events
+                <Calendar className="ml-2 h-5 w-5" />
+              </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -336,7 +350,7 @@ export default function LibraryLanding() {
       </section>
 
       {/* Contact Section */}
-      <section id="about" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -345,15 +359,21 @@ export default function LibraryLanding() {
                 Located in the heart of downtown, our library is easily accessible by public transport and offers ample
                 parking. Come explore our collections and join our vibrant community.
               </p>
+              <a href="/about" className="inline-block mb-6">
+                <Button variant="outline" size="lg">
+                  Learn More About Us
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </a>
 
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700 dark:text-gray-300">123 Main Street, Downtown City, ST 12345</span>
+                  <span className="text-gray-700 dark:text-gray-300">Bugema Univerity main Campus, </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="h-5 w-5 text-blue-600" />
-                  <span className="text-gray-700 dark:text-gray-300">(555) 123-4567</span>
+                  <span className="text-gray-700 dark:text-gray-300">+256 772 615 135</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="h-5 w-5 text-blue-600" />
@@ -379,7 +399,9 @@ export default function LibraryLanding() {
                 <Input placeholder="Email Address" />
                 <Input placeholder="Phone Number" />
                 <Input placeholder="Address" />
-                <Button className="w-full">Apply for Library Card</Button>
+                <a href="/signup">
+                  <Button className="w-full">Apply for Library Card</Button>
+                </a>
                 <p className="text-sm text-gray-500 text-center">Free membership • Instant digital access • No fees</p>
               </CardContent>
             </Card>
