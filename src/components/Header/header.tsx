@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Button } from '../ui/button'
 import { BookOpen, X, Menu } from 'lucide-react'
+import Link from 'next/link'
 
 const Header = () => {
           const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -9,10 +10,10 @@ const Header = () => {
     <div className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">      {/* Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900 dark:text-white">CityLibrary</span>
-            </div>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
@@ -28,10 +29,10 @@ const Header = () => {
               <a href="#about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 About
               </a>
-              <Button variant="outline" className="mr-2 bg-transparent">
+              <Link href="/sign-in" className="mr-2 bg-transparent">
                 Sign In
-              </Button>
-              <Button>Join Now</Button>
+              </Link>
+              <Link href="/sign-up" >Join Now</Link>
             </div>
 
             {/* Mobile menu button */}
@@ -60,10 +61,10 @@ const Header = () => {
                 About
               </a>
               <div className="px-3 py-2 space-y-2">
-                <Button variant="outline" className="w-full bg-transparent">
+                <Link href="/sign-in" className="w-full bg-transparent">
                   Sign In
-                </Button>
-                <Button className="w-full">Join Now</Button>
+                </Link>
+                <Link href="/sign-up" className="w-full">Join Now</Link>
               </div>
             </div>
           </div>
