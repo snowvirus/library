@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Button } from '../ui/button'
 import { BookOpen, X, Menu } from 'lucide-react'
+import Link from 'next/link'
 
 const Header = () => {
           const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -28,6 +29,7 @@ const Header = () => {
               <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 About
               </a>
+
               <a href="/account" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 My Account
               </a>
