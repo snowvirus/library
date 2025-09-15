@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import {
   BookOpen,
   Users,
@@ -19,18 +18,13 @@ import {
   Phone,
   Mail,
   Clock,
-  Star,
   ArrowRight,
-  CheckCircle,
   Quote,
-  Building,
   GraduationCap,
-  Library,
   History,
-  Eye,
   HandHeart,
-  Zap,
 } from "lucide-react"
+import Image from "next/image"
 
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState("mission")
@@ -166,7 +160,7 @@ export default function AboutPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">About CityLibrary</h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Serving our community for over 100 years, we're more than just a library – we're a hub for learning, 
+            Serving our community for over 100 years, we&apos;re more than just a library – we&apos;re a hub for learning, 
             discovery, and connection.
           </p>
         </div>
@@ -231,8 +225,8 @@ export default function AboutPage() {
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h3>
                 </div>
                 <p className="text-lg text-gray-600 dark:text-gray-300 text-center max-w-4xl mx-auto">
-                  "To be the heart of our community, where every person can discover their potential, 
-                  pursue their passions, and connect with others through the power of knowledge and learning."
+                  &ldquo;To be the heart of our community, where every person can discover their potential, 
+                  pursue their passions, and connect with others through the power of knowledge and learning.&rdquo;
                 </p>
               </CardContent>
             </Card>
@@ -254,9 +248,11 @@ export default function AboutPage() {
                 <Card key={index} className="overflow-hidden">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                     <div className="md:col-span-1">
-                      <img
+                      <Image
                         src={event.image}
                         alt={event.title}
+                        width={400}
+                        height={256}
                         className="w-full h-48 md:h-full object-cover"
                       />
                     </div>
@@ -288,9 +284,11 @@ export default function AboutPage() {
               {teamMembers.map((member, index) => (
                 <Card key={index} className="p-6 hover:shadow-lg transition-shadow duration-300">
                   <div className="flex items-start gap-6">
-                    <img
+                    <Image
                       src={member.image}
                       alt={member.name}
+                      width={96}
+                      height={96}
                       className="w-24 h-24 rounded-full object-cover"
                     />
                     <div className="flex-1">
