@@ -33,14 +33,12 @@ export default function LoginForm() {
       // Clear any error messages
       setError('');
       
-      // Wait for auth context to update, then redirect
-      setTimeout(() => {
-        if (result.user?.isAdmin) {
-          router.push('/admin');
-        } else {
-          router.push(redirect);
-        }
-      }, 200);
+      // Immediate redirect based on user type
+      if (result.user?.isAdmin) {
+        router.push('/admin');
+      } else {
+        router.push(redirect);
+      }
     } else {
       setError(result.message);
     }

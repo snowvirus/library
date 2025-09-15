@@ -55,6 +55,7 @@ export default function EditBookPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -149,28 +150,72 @@ export default function EditBookPage() {
     }));
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
         setCoverImageFile(file);
-        // Create a preview URL
-        const imageUrl = URL.createObjectURL(file);
-        setFormData(prev => ({ ...prev, coverImage: imageUrl }));
+        setUploading(true);
+        
+        try {
+          // Upload file to server
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            setFormData(prev => ({ ...prev, coverImage: result.fileUrl }));
+          } else {
+            alert(`Upload failed: ${result.error}`);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload image');
+        } finally {
+          setUploading(false);
+        }
       } else {
         alert('Please select a valid image file');
       }
     }
   };
 
-  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type === 'application/pdf') {
         setPdfFile(file);
-        // Create a preview URL
-        const pdfUrl = URL.createObjectURL(file);
-        setFormData(prev => ({ ...prev, fileUrl: pdfUrl }));
+        setUploading(true);
+        
+        try {
+          // Upload file to server
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            setFormData(prev => ({ ...prev, fileUrl: result.fileUrl }));
+          } else {
+            alert(`Upload failed: ${result.error}`);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload PDF');
+        } finally {
+          setUploading(false);
+        }
       } else {
         alert('Please select a valid PDF file');
       }
@@ -611,13 +656,13 @@ export default function EditBookPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving || uploading}>
             {saving ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {saving ? 'Saving...' : 'Update Book'}
+            {uploading ? 'Uploading...' : saving ? 'Saving...' : 'Update Book'}
           </Button>
         </div>
       </form>
