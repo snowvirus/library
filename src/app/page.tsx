@@ -5,7 +5,6 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Hero />
-      <Footer />
     </div>
   );
 }
