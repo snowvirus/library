@@ -13,7 +13,6 @@ export default function AdminRedirect() {
   useEffect(() => {
     // Only redirect if user is admin and not already on admin pages
     if (!loading && user?.isAdmin && !pathname.startsWith('/admin') && !hasRedirected) {
-      console.log('Admin user detected, redirecting to admin panel');
       setHasRedirected(true);
       router.push('/admin');
     }
