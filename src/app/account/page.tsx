@@ -45,21 +45,22 @@ export default function AccountPage() {
   const fetchUserTransactions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/transactions?limit=1000');
+      const response = await fetch('/api/user/transactions?limit=1000');
       const data = await response.json();
       
-      // Filter transactions for current user
-      const userTransactions = data.transactions?.filter((t: UserTransaction) => 
-        t.user._id === user?._id
-      ) || [];
-      
-      setTransactions(userTransactions);
+      if (response.ok) {
+        setTransactions(data.transactions || []);
+      } else {
+        console.error('Error fetching transactions:', data.error);
+        setTransactions([]);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
-  }, [user?._id]);
+  }, []);
 
   useEffect(() => {
     if (user) {

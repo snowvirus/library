@@ -56,6 +56,7 @@ export default function BooksPage() {
   const [totalBooks, setTotalBooks] = useState(0);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [downloadingBook, setDownloadingBook] = useState<string | null>(null);
 
   const categories = [
     'Fiction', 'Non-Fiction', 'Biography', 'Science', 'Technology', 
@@ -93,6 +94,23 @@ export default function BooksPage() {
     fetchBooks();
   }, [fetchBooks]);
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showBookModal) {
+        handleCloseModal();
+      }
+    };
+
+    if (showBookModal) {
+      document.addEventListener('keydown', handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [showBookModal]);
+
 
   const handleDelete = async (bookId: string) => {
     if (!confirm('Are you sure you want to delete this book?')) return;
@@ -125,8 +143,14 @@ export default function BooksPage() {
     window.location.href = `/admin/books/edit/${book._id}`;
   };
 
-  const handleDownload = (book: Book) => {
-    if (book.fileUrl) {
+  const handleDownload = async (book: Book) => {
+    if (!book.fileUrl) {
+      alert('No download file available for this book');
+      return;
+    }
+
+    setDownloadingBook(book._id);
+    try {
       if (book.fileUrl.startsWith('blob:')) {
         // For blob URLs, create a download link
         const link = document.createElement('a');
@@ -135,10 +159,39 @@ export default function BooksPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+      } else if (book.fileUrl.startsWith('/uploads/')) {
+        // For uploaded files, create a download link
+        const link = document.createElement('a');
+        link.href = book.fileUrl;
+        link.download = `${book.title}.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        // For external URLs, open in new tab
-        window.open(book.fileUrl, '_blank');
+        // For external URLs, try to download or open in new tab
+        const response = await fetch(book.fileUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${book.title}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } else {
+          // Fallback to opening in new tab
+          window.open(book.fileUrl, '_blank');
+        }
       }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to opening in new tab
+      window.open(book.fileUrl, '_blank');
+    } finally {
+      setDownloadingBook(null);
     }
   };
 
@@ -308,9 +361,14 @@ export default function BooksPage() {
                     variant="outline" 
                     onClick={() => handleDownload(book)}
                     className="flex-1"
+                    disabled={downloadingBook === book._id}
                   >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
+                    {downloadingBook === book._id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
+                    ) : (
+                      <Download className="h-4 w-4 mr-1" />
+                    )}
+                    {downloadingBook === book._id ? 'Downloading...' : 'Download'}
                   </Button>
                 )}
                 <Button 
@@ -381,8 +439,14 @@ export default function BooksPage() {
 
       {/* Book Details Modal */}
       {showBookModal && selectedBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={handleCloseModal}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">Book Details</h2>
               <Button variant="outline" onClick={handleCloseModal}>
@@ -390,6 +454,32 @@ export default function BooksPage() {
               </Button>
             </div>
             
+            {/* Cover Image */}
+            {selectedBook.coverImage && (
+              <div className="mb-6 flex justify-center">
+                <div className="w-48 h-64 bg-gray-200 rounded-lg overflow-hidden shadow-lg">
+                  {selectedBook.coverImage.startsWith('blob:') ? (
+                    <Image
+                      src={selectedBook.coverImage}
+                      alt={selectedBook.title}
+                      width={192}
+                      height={256}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <Image
+                      src={selectedBook.coverImage}
+                      alt={selectedBook.title}
+                      width={192}
+                      height={256}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
@@ -402,7 +492,13 @@ export default function BooksPage() {
                   <p><span className="font-medium">Published Year:</span> {selectedBook.publishedYear}</p>
                   <p><span className="font-medium">Language:</span> {selectedBook.language}</p>
                   <p><span className="font-medium">Pages:</span> {selectedBook.pages}</p>
-                  <p><span className="font-medium">Rating:</span> {selectedBook.rating}/5</p>
+                  <p><span className="font-medium">Rating:</span> 
+                    <span className="ml-2 text-yellow-500">
+                      {'★'.repeat(Math.floor(selectedBook.rating))}
+                      {'☆'.repeat(5 - Math.floor(selectedBook.rating))}
+                    </span>
+                    <span className="ml-1 text-gray-600">({selectedBook.rating}/5)</span>
+                  </p>
                 </div>
               </div>
               
@@ -447,6 +543,20 @@ export default function BooksPage() {
               <Button variant="outline" onClick={handleCloseModal}>
                 Close
               </Button>
+              {selectedBook.isDigital && selectedBook.fileUrl && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleDownload(selectedBook)}
+                  disabled={downloadingBook === selectedBook._id}
+                >
+                  {downloadingBook === selectedBook._id ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
+                  ) : (
+                    <Download className="h-4 w-4 mr-1" />
+                  )}
+                  {downloadingBook === selectedBook._id ? 'Downloading...' : 'Download'}
+                </Button>
+              )}
               <Button onClick={() => handleEditBook(selectedBook)}>
                 <Edit className="h-4 w-4 mr-1" />
                 Edit Book
