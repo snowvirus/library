@@ -67,7 +67,7 @@ export const AuthenticateUser = async (email: string, password: string) => {
       return { success: false, status: 404, message: "User not Found", user: user.user };
     }
     
-    const isMatch = await bcrypt.compare(password, user.user?.passwordHash ?? "");
+    const isMatch = await bcrypt.compare(password, user.user?.password ?? "");
     if (!isMatch) {
       return { success: false, status: 401, message: "Invalid Password", user: user.user };
     }
