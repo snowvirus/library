@@ -100,28 +100,72 @@ export default function AddBookPage() {
     }));
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
         setCoverImageFile(file);
-        // Create a preview URL
-        const imageUrl = URL.createObjectURL(file);
-        setFormData(prev => ({ ...prev, coverImage: imageUrl }));
+        setUploading(true);
+        
+        try {
+          // Upload file to server
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            setFormData(prev => ({ ...prev, coverImage: result.fileUrl }));
+          } else {
+            alert(`Upload failed: ${result.error}`);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload image');
+        } finally {
+          setUploading(false);
+        }
       } else {
         alert('Please select a valid image file');
       }
     }
   };
 
-  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type === 'application/pdf') {
         setPdfFile(file);
-        // Create a preview URL
-        const pdfUrl = URL.createObjectURL(file);
-        setFormData(prev => ({ ...prev, fileUrl: pdfUrl }));
+        setUploading(true);
+        
+        try {
+          // Upload file to server
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            setFormData(prev => ({ ...prev, fileUrl: result.fileUrl }));
+          } else {
+            alert(`Upload failed: ${result.error}`);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload PDF');
+        } finally {
+          setUploading(false);
+        }
       } else {
         alert('Please select a valid PDF file');
       }
@@ -444,6 +488,9 @@ export default function AddBookPage() {
                       <p className="text-xs text-gray-500">
                         {(coverImageFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
+                      {uploading && (
+                        <p className="text-xs text-blue-600">Uploading...</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -490,6 +537,9 @@ export default function AddBookPage() {
                       <p className="text-xs text-gray-500">
                         {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
+                      {uploading && (
+                        <p className="text-xs text-blue-600">Uploading...</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -552,13 +602,13 @@ export default function AddBookPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={loading || uploading}>
+            {loading || uploading ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {loading ? 'Creating...' : 'Create Book'}
+            {uploading ? 'Uploading...' : loading ? 'Creating...' : 'Create Book'}
           </Button>
         </div>
       </form>

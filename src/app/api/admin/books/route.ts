@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       query.category = category;
     }
     
-    if (isAvailable !== null && isAvailable !== undefined) {
+    if (isAvailable !== null && isAvailable !== undefined && isAvailable !== '') {
       query.isAvailable = isAvailable === 'true';
     }
 

@@ -19,6 +19,7 @@ import {
   Download,
   Loader2,
   Bookmark,
+  X,
 } from "lucide-react"
 
 interface Book {
@@ -48,11 +49,14 @@ export default function CatalogPage() {
   const [sortBy, setSortBy] = useState("title")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null)
+  const [showBookModal, setShowBookModal] = useState(false)
+  const [downloadingBook, setDownloadingBook] = useState<string | null>(null)
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([])
   
-  const { user } = useAuth()
+  const { user, token } = useAuth()
 
   const categories = ["All", "Fiction", "Non-Fiction", "Biography", "Science", "Technology", "History", "Self-Help", "Romance", "Mystery", "Thriller", "Fantasy", "Science Fiction", "Poetry", "Drama", "Comedy", "Education", "Reference", "Children", "Young Adult"]
 
@@ -111,15 +115,59 @@ export default function CatalogPage() {
     }
   }
 
-  const handleDownload = (book: Book) => {
-    if (book.fileUrl) {
-      window.open(book.fileUrl, '_blank')
-    } else {
-      alert('No download file available for this book')
+  const handleDownload = async (book: Book) => {
+    if (!book.fileUrl) {
+      alert('No download file available for this book');
+      return;
+    }
+
+    setDownloadingBook(book._id);
+    try {
+      if (book.fileUrl.startsWith('blob:')) {
+        // For blob URLs, create a download link
+        const link = document.createElement('a');
+        link.href = book.fileUrl;
+        link.download = `${book.title}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (book.fileUrl.startsWith('/uploads/')) {
+        // For uploaded files, create a download link
+        const link = document.createElement('a');
+        link.href = book.fileUrl;
+        link.download = `${book.title}.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For external URLs, try to download or open in new tab
+        const response = await fetch(book.fileUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${book.title}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } else {
+          // Fallback to opening in new tab
+          window.open(book.fileUrl, '_blank');
+        }
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to opening in new tab
+      window.open(book.fileUrl, '_blank');
+    } finally {
+      setDownloadingBook(null);
     }
   }
 
-  const handleReserve = (book: Book) => {
+  const handleReserve = async (book: Book) => {
     if (!user) {
       alert('Please sign in to reserve books')
       return
@@ -128,14 +176,58 @@ export default function CatalogPage() {
       alert(`${book.title} is currently unavailable. Added to waitlist.`)
       return
     }
-    // TODO: Implement reservation logic
-    alert(`Reserved: ${book.title} by ${book.author}`)
+
+    try {
+      const response = await fetch('/api/user/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          bookId: book._id
+        })
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        alert(`Successfully reserved: ${book.title} by ${book.author}`)
+      } else {
+        alert(data.error || 'Failed to reserve book')
+      }
+    } catch (error) {
+      console.error('Error reserving book:', error)
+      alert('Failed to reserve book')
+    }
   }
 
   const handleView = (book: Book) => {
-    // Open book details in a new tab or modal
-    window.open(`/catalog?view=${encodeURIComponent(book.title)}`, '_blank')
+    setSelectedBook(book)
+    setShowBookModal(true)
   }
+
+  const handleCloseModal = () => {
+    setShowBookModal(false)
+    setSelectedBook(null)
+  }
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showBookModal) {
+        handleCloseModal()
+      }
+    }
+
+    if (showBookModal) {
+      document.addEventListener('keydown', handleEscKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey)
+    }
+  }, [showBookModal])
 
   if (loading) {
     return (
@@ -437,14 +529,18 @@ export default function CatalogPage() {
                                 {book.isAvailable ? 'Reserve' : 'Unavailable'}
                               </Button>
                               {book.isDigital && book.fileUrl && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
+                                <Button
+                                  size="sm"
+                                  variant="outline"
                                   onClick={() => handleDownload(book)}
-                                  disabled={!book.isAvailable}
+                                  disabled={!book.isAvailable || downloadingBook === book._id}
                                   title="Download Book"
                                 >
-                                  <Download className="h-4 w-4" />
+                                  {downloadingBook === book._id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                                  ) : (
+                                    <Download className="h-4 w-4" />
+                                  )}
                                 </Button>
                               )}
                             </div>
@@ -456,6 +552,135 @@ export default function CatalogPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Book Details Modal */}
+        {showBookModal && selectedBook && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={handleCloseModal}
+          >
+            <div 
+              className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Book Details</h2>
+                <Button variant="outline" onClick={handleCloseModal}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Cover Image */}
+              {selectedBook.coverImage && (
+                <div className="mb-6 flex justify-center">
+                  <div className="w-48 h-64 bg-gray-200 rounded-lg overflow-hidden shadow-lg">
+                    {selectedBook.coverImage.startsWith('blob:') ? (
+                      <Image
+                        src={selectedBook.coverImage}
+                        alt={selectedBook.title}
+                        width={192}
+                        height={256}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <Image
+                        src={selectedBook.coverImage}
+                        alt={selectedBook.title}
+                        width={192}
+                        height={256}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Title:</span> {selectedBook.title}</p>
+                    <p><span className="font-medium">Author:</span> {selectedBook.author}</p>
+                    <p><span className="font-medium">ISBN:</span> {selectedBook.isbn}</p>
+                    <p><span className="font-medium">Category:</span> {selectedBook.category}</p>
+                    <p><span className="font-medium">Publisher:</span> {selectedBook.publisher}</p>
+                    <p><span className="font-medium">Published Year:</span> {selectedBook.publishedYear}</p>
+                    <p><span className="font-medium">Language:</span> {selectedBook.language}</p>
+                    <p><span className="font-medium">Pages:</span> {selectedBook.pages}</p>
+                    <p><span className="font-medium">Rating:</span> 
+                      <span className="ml-2 text-yellow-500">
+                        {'★'.repeat(Math.floor(selectedBook.rating))}
+                        {'☆'.repeat(5 - Math.floor(selectedBook.rating))}
+                      </span>
+                      <span className="ml-1 text-gray-600">({selectedBook.rating}/5)</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Availability & Status</h3>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Total Copies:</span> {selectedBook.totalCopies}</p>
+                    <p><span className="font-medium">Available Copies:</span> {selectedBook.availableCopies}</p>
+                    <p><span className="font-medium">Status:</span> 
+                      <Badge className={`ml-2 ${selectedBook.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {selectedBook.isAvailable ? 'Available' : 'Unavailable'}
+                      </Badge>
+                    </p>
+                    <p><span className="font-medium">Digital:</span> 
+                      <Badge className={`ml-2 ${selectedBook.isDigital ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {selectedBook.isDigital ? 'Yes' : 'No'}
+                      </Badge>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded">{selectedBook.description}</p>
+              </div>
+              
+              {selectedBook.tags && selectedBook.tags.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedBook.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Close
+                </Button>
+                {selectedBook.isDigital && selectedBook.fileUrl && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleDownload(selectedBook)}
+                    disabled={downloadingBook === selectedBook._id}
+                  >
+                    {downloadingBook === selectedBook._id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1"></div>
+                    ) : (
+                      <Download className="h-4 w-4 mr-1" />
+                    )}
+                    {downloadingBook === selectedBook._id ? 'Downloading...' : 'Download'}
+                  </Button>
+                )}
+                {selectedBook.isAvailable && (
+                  <Button onClick={() => handleReserve(selectedBook)}>
+                    <Bookmark className="h-4 w-4 mr-1" />
+                    Reserve
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

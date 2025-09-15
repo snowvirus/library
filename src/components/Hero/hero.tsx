@@ -145,15 +145,14 @@ export default function LibraryLanding() {
 
     setLoading(true)
     try {
-      const response = await fetch('/api/reservations', {
+      const response = await fetch('/api/user/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          bookId: book._id,
-          userId: user._id
+          bookId: book._id
         })
       })
 
