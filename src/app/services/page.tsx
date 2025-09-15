@@ -158,7 +158,7 @@ export default function ServicesPage() {
         "Genealogy resources"
       ],
       stats: "100+ databases available",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=300&fit=crop&crop=center"
+      image: "https://m.media-amazon.com/images/I/71NG5d07G2S._AC_UF1000,1000_QL80_.jpg"
     },
     {
       id: "technology",
