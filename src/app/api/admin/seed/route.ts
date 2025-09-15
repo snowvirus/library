@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Book from '@/models/Book';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
+import bcrypt from 'bcryptjs';
 
 const sampleBooks = [
   {
@@ -161,9 +162,25 @@ const sampleBooks = [
 
 const sampleUsers = [
   {
+    firstName: "Admin",
+    lastName: "User",
+    email: "admin@citylibrary.com",
+    password: "password123",
+    phone: "+1-555-0001",
+    address: "123 Admin Street, Library City, ST 12345",
+    membershipId: "LIB000001",
+    membershipType: "Premium",
+    isActive: true,
+    isAdmin: true,
+    borrowedBooks: [],
+    reservedBooks: [],
+    fineAmount: 0
+  },
+  {
     firstName: "John",
     lastName: "Smith",
-    email: "john.smith@email.com",
+    email: "user@citylibrary.com",
+    password: "password123",
     phone: "+1-555-0123",
     address: "123 Main Street, Anytown, ST 12345",
     membershipId: "LIB001234",
@@ -178,6 +195,7 @@ const sampleUsers = [
     firstName: "Sarah",
     lastName: "Johnson",
     email: "sarah.johnson@email.com",
+    password: "password123",
     phone: "+1-555-0124",
     address: "456 Oak Avenue, Anytown, ST 12345",
     membershipId: "LIB001235",
@@ -192,12 +210,13 @@ const sampleUsers = [
     firstName: "Michael",
     lastName: "Brown",
     email: "michael.brown@email.com",
+    password: "password123",
     phone: "+1-555-0125",
     address: "789 Pine Road, Anytown, ST 12345",
     membershipId: "LIB001236",
     membershipType: "Basic",
     isActive: true,
-    isAdmin: true,
+    isAdmin: false,
     borrowedBooks: [],
     reservedBooks: [],
     fineAmount: 0
@@ -206,6 +225,7 @@ const sampleUsers = [
     firstName: "Emily",
     lastName: "Davis",
     email: "emily.davis@email.com",
+    password: "password123",
     phone: "+1-555-0126",
     address: "321 Elm Street, Anytown, ST 12345",
     membershipId: "LIB001237",
@@ -220,6 +240,7 @@ const sampleUsers = [
     firstName: "David",
     lastName: "Wilson",
     email: "david.wilson@email.com",
+    password: "password123",
     phone: "+1-555-0127",
     address: "654 Maple Drive, Anytown, ST 12345",
     membershipId: "LIB001238",
@@ -232,7 +253,7 @@ const sampleUsers = [
   }
 ];
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     await connectDB();
 
@@ -245,9 +266,27 @@ export async function POST(request: NextRequest) {
     const books = await Book.insertMany(sampleBooks);
     console.log(`Inserted ${books.length} books`);
 
+    // Hash passwords for all users
+    const hashedUsers = await Promise.all(
+      sampleUsers.map(async (user) => {
+        const hashedPassword = await bcrypt.hash(user.password, 12);
+        console.log(`Hashing password for ${user.email}: ${hashedPassword.substring(0, 20)}...`);
+        return {
+          ...user,
+          password: hashedPassword
+        };
+      })
+    );
+
+    console.log('Sample user with password:', hashedUsers[0]);
+
     // Insert sample users
-    const users = await User.insertMany(sampleUsers);
+    const users = await User.insertMany(hashedUsers);
     console.log(`Inserted ${users.length} users`);
+    
+    // Verify the first user has a password
+    const firstUser = await User.findById(users[0]._id);
+    console.log('First user password exists:', !!firstUser?.password);
 
     // Create some sample transactions
     const sampleTransactions = [

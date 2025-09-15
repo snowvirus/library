@@ -4,6 +4,7 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   phone: string;
   address: string;
   membershipId: string;
@@ -36,6 +37,11 @@ const UserSchema = new Schema<IUser>({
     unique: true,
     lowercase: true,
     trim: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
   },
   phone: {
     type: String,
@@ -94,4 +100,9 @@ UserSchema.index({ email: 1 });
 UserSchema.index({ membershipId: 1 });
 UserSchema.index({ isActive: 1 });
 
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+// Clear the model if it exists to ensure schema changes take effect
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model<IUser>('User', UserSchema);

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   BookOpen, 
   Users, 
@@ -16,13 +16,34 @@ import {
   Home,
   Plus,
   Search,
-  Download,
-  Database
+  Database,
+  LogOut,
+  User
 } from 'lucide-react';
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && (!user || !user.isAdmin)) {
+      router.push('/sign-in?redirect=/admin');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user || !user.isAdmin) {
+    return null;
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3 },
@@ -125,13 +146,22 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
               </div>
             </div>
-            <div className="ml-4 flex items-center md:ml-6">
+            <div className="ml-4 flex items-center space-x-4 md:ml-6">
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <User className="h-4 w-4" />
+                <span>{user.firstName} {user.lastName}</span>
+                <span className="text-gray-500">({user.membershipId})</span>
+              </div>
               <Link href="/">
                 <Button variant="outline" size="sm">
                   <Home className="h-4 w-4 mr-2" />
                   View Site
                 </Button>
               </Link>
+              <Button variant="outline" size="sm" onClick={logout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>

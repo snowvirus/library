@@ -9,8 +9,7 @@ import {
   AlertTriangle,
   BookOpen,
   Users,
-  FileText,
-  Trash2
+  FileText
 } from 'lucide-react';
 
 export default function SeedDataPage() {
@@ -18,7 +17,11 @@ export default function SeedDataPage() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    data?: any;
+    data?: {
+      books?: number;
+      users?: number;
+      transactions?: number;
+    };
   } | null>(null);
 
   const handleSeedData = async () => {

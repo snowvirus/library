@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  Users, 
   Save, 
   ArrowLeft
 } from 'lucide-react';
@@ -26,8 +24,9 @@ interface UserFormData {
 const membershipTypes = ['Basic', 'Premium', 'Student', 'Senior'];
 
 export default function AddUserPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '',
     lastName: '',
@@ -39,7 +38,7 @@ export default function AddUserPage() {
     isAdmin: false
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -50,6 +49,7 @@ export default function AddUserPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSuccess(false);
 
     try {
       const response = await fetch('/api/admin/users', {
@@ -60,11 +60,24 @@ export default function AddUserPage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        router.push('/admin/users');
+        setSuccess(true);
+        setTempPassword(data.tempPassword);
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: '',
+          membershipType: 'Basic',
+          isActive: true,
+          isAdmin: false
+        });
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
+        alert(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error creating user:', error);
@@ -233,6 +246,22 @@ export default function AddUserPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Success Message */}
+        {success && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2 text-green-800">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="font-medium">User created successfully!</span>
+              </div>
+              <div className="mt-2 text-sm text-green-700">
+                <p>Temporary password: <span className="font-mono font-bold bg-green-100 px-2 py-1 rounded">{tempPassword}</span></p>
+                <p className="mt-1">Please share this password with the user. They should change it on first login.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-end space-x-4">

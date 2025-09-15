@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || '';
     const isAvailable = searchParams.get('isAvailable');
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     
     if (search) {
       query.$or = [

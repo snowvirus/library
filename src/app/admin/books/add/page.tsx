@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  BookOpen, 
   Save, 
   ArrowLeft,
+  X,
   Upload,
-  X
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -51,6 +52,9 @@ export default function AddBookPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<BookFormData>({
     title: '',
     author: '',
@@ -94,6 +98,34 @@ export default function AddBookPage() {
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setCoverImageFile(file);
+        // Create a preview URL
+        const imageUrl = URL.createObjectURL(file);
+        setFormData(prev => ({ ...prev, coverImage: imageUrl }));
+      } else {
+        alert('Please select a valid image file');
+      }
+    }
+  };
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type === 'application/pdf') {
+        setPdfFile(file);
+        // Create a preview URL
+        const pdfUrl = URL.createObjectURL(file);
+        setFormData(prev => ({ ...prev, fileUrl: pdfUrl }));
+      } else {
+        alert('Please select a valid PDF file');
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -374,31 +406,103 @@ export default function AddBookPage() {
         <Card>
           <CardHeader>
             <CardTitle>Media and Files</CardTitle>
-            <CardDescription>Cover image and downloadable files</CardDescription>
+            <CardDescription>Upload cover image and PDF file from your computer</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Cover Image Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cover Image URL
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cover Image
               </label>
-              <Input
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleInputChange}
-                placeholder="https://example.com/cover.jpg"
-              />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <ImageIcon className="w-8 h-8 mb-4 text-gray-500" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span> cover image
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {coverImageFile && (
+                  <div className="flex items-center space-x-2">
+                    <img
+                      src={formData.coverImage}
+                      alt="Cover preview"
+                      className="w-16 h-20 object-cover rounded border"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{coverImageFile.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {(coverImageFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  Or enter URL manually:
+                </div>
+                <Input
+                  name="coverImage"
+                  value={formData.coverImage}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/cover.jpg"
+                />
+              </div>
             </div>
 
+            {/* PDF Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Download File URL
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                PDF File (for digital books)
               </label>
-              <Input
-                name="fileUrl"
-                value={formData.fileUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/book.pdf"
-              />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <FileText className="w-8 h-8 mb-4 text-gray-500" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span> PDF file
+                      </p>
+                      <p className="text-xs text-gray-500">PDF up to 50MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handlePdfUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {pdfFile && (
+                  <div className="flex items-center space-x-2">
+                    <FileText className="w-8 h-8 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{pdfFile.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  Or enter URL manually:
+                </div>
+                <Input
+                  name="fileUrl"
+                  value={formData.fileUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/book.pdf"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -9,25 +9,10 @@ import { IoEye } from "react-icons/io5";
 import Link from "next/link"
 import bcrypt from "bcryptjs"
 import {CreateUser} from "@/lib/server-actions/user-actions"
-import { useRouter } from "next/navigation";
-import { GoogleLogin } from "@react-oauth/google"
-// import useSignUpWithGoogle from "@/hooks/useSignUpWithGoogle"
-import { CredentialResponse } from "@react-oauth/google";
+// Removed unused useRouter import
 import {User} from "@/lib/types" 
 
-interface user {
-        username: string,
-        email: string,
-        passwordHash: string,
-        phoneNumber: string,
-        profilePicture:string,
-        isVerified: boolean,
-        role: string,
-        reset_token: string,
-        reset_token_expires:number,
-        updatedAt: number,
-        lastLogin: number,
-}
+// Removed unused user interface
 interface formdata{
         username: string,
         email: string,
@@ -44,7 +29,6 @@ const SignUpForm = ({
         const [view2,setview2] = useState(false)
         const [isSubmitting, setIsSubmitting] = useState(false)
         const[SubmittingError,setSubmittingError] = useState("")
-        const [successMessage,setSuccessMessage] = useState("")
         const [email, setEmail] = useState('');
         const [password1, setPassword1] = useState('');
         const [password1type, setpassword1type] = useState('password');
@@ -52,7 +36,6 @@ const SignUpForm = ({
         const [password2, setPassword2] = useState('');
         const [PasswordError,setPasswordError] = useState(false)
         const [username, setusername] = useState('');
-        const [UserNameIsTaken, setUserNameIsTaken] = useState<boolean>(false);
         const [phoneNumber, setPhoneNumber] = useState('');
         const [passwordsDontMatch, setpasswordsDontMatch] = useState(false);
         const [formdata, setformdata] = useState<formdata>({
@@ -77,7 +60,7 @@ const SignUpForm = ({
                 lastLogin: 0
         })
         // const {SignUpWithGoogle} = useSignUpWithGoogle()
-        const router = useRouter()
+        // Removed unused router
 
         // const HandleGoogleLogin= async(response:CredentialResponse)=>{
         //         // console.log(response)
@@ -193,19 +176,18 @@ const handlePassword2Change = (e: React.ChangeEvent<HTMLInputElement>)=>{
                 const hashPassword = async (plainPassword: string) => {
                         const saltRounds = 10;
                         const hashedPassword = await bcrypt.hash(plainPassword, saltRounds);
-                        console.log("hash",hashedPassword)
                         return hashedPassword;
                 };
 
                 const updateFormData = async () => {
                         const PasswordHash = await hashPassword(password1);
-                        setformdata({
-                                ...formdata,
+                        setformdata(prev => ({
+                                ...prev,
                                 username: username,
                                 email: email,
                                 phoneNumber: phoneNumber,
                                 password: PasswordHash,
-                        });
+                        }));
                 };
 
                 updateFormData();
@@ -251,7 +233,7 @@ clearForm()
           Enter your your Details below to create to your account
         </p>
         {Created && <p className="text-balance text-sm text-green-500">
-        {successMessage}
+        Account created successfully! Please sign in.
         </p> }
         {SubmittingError  && SubmittingError.length>0  && <p className="text-balance text-sm text-red-500">
           Error !  {SubmittingError}
@@ -271,8 +253,7 @@ clearForm()
           placeholder="shopcheap"
            required />
            {username && username.length<5 && <h1 className="text-red-600 text-xs ">username should have atleast 5 characters </h1>}
-           {UserNameIsTaken && <h1 className="text-red-600 text-xs "><span className="text-black dark:text-white" >{username}</span> is taken </h1>}
-           {!UserNameIsTaken && username.length>4 &&  <h1 className="text-green-600 text-sm "><span className="text-black dark:text-white" >{username}</span> is available </h1>}
+           {/* Username availability check removed */}
         </div>
 
         <div className="grid gap-2">
@@ -350,7 +331,7 @@ clearForm()
                 )}
                 </div>
 
-        <Button type="submit" disabled={!username || !password1 || !password2|| UserNameIsTaken || PasswordError || passwordsDontMatch} className="w-full bg-dark dark:bg-gold ">
+        <Button type="submit" disabled={!username || !password1 || !password2|| PasswordError || passwordsDontMatch} className="w-full bg-dark dark:bg-gold ">
           {isSubmitting?"Submitting":"Sign Up"}
         </Button>
         <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">

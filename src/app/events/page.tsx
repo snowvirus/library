@@ -1,31 +1,151 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Search,
-  Filter,
-  ChevronDown,
-  Star,
-  BookOpen,
-  Mic,
-  Camera,
-  Laptop,
-  Coffee,
-  Music,
-  Paintbrush,
-  Globe,
-  ArrowRight,
-  Plus,
-} from "lucide-react"
+import { Calendar, MapPin, Users, Clock, Filter, Search, Star, Coffee, Music, BookOpen } from "lucide-react"
+import Image from "next/image"
+
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  date: string;
+  time: string;
+  location: string;
+  capacity: number;
+  registered: number;
+  price: string;
+  image: string;
+  featured: boolean;
+  tags: string[];
+}
+
+const staticEvents: Event[] = [
+  {
+    id: 1,
+    title: "Monthly Book Club Discussion",
+    description: "Join us for our monthly book club discussion of 'The Midnight Library' by Matt Haig. Light refreshments will be provided.",
+    category: "Book Club",
+    date: "2025-01-15",
+    time: "7:00 PM - 8:30 PM",
+    location: "Main Reading Room",
+    capacity: 25,
+    registered: 18,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300&h=200&fit=crop&crop=center",
+    featured: true,
+    tags: ["Fiction", "Discussion", "Adults"],
+  },
+  {
+    id: 2,
+    title: "Digital Literacy Workshop",
+    description: "Learn essential digital skills including email, internet safety, and basic computer operations. Perfect for beginners.",
+    category: "Workshop",
+    date: "2025-01-20",
+    time: "2:00 PM - 4:00 PM",
+    location: "Computer Lab",
+    capacity: 15,
+    registered: 12,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&h=200&fit=crop&crop=center",
+    featured: false,
+    tags: ["Technology", "Education", "All Ages"],
+  },
+  {
+    id: 3,
+    title: "Author Meet & Greet: Sarah Johnson",
+    description: "Meet local author Sarah Johnson as she discusses her latest novel 'City of Dreams' and shares insights into her writing process.",
+    category: "Author Talk",
+    date: "2025-01-25",
+    time: "6:00 PM - 7:30 PM",
+    location: "Community Hall",
+    capacity: 50,
+    registered: 35,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=center",
+    featured: true,
+    tags: ["Author", "Q&A", "Adults"],
+  },
+  {
+    id: 4,
+    title: "Children's Story Time",
+    description: "Interactive story time for children ages 3-8. Features classic tales, songs, and crafts. Parents welcome to join!",
+    category: "Children's Program",
+    date: "2025-01-18",
+    time: "10:00 AM - 11:00 AM",
+    location: "Children's Section",
+    capacity: 20,
+    registered: 15,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=200&fit=crop&crop=center",
+    featured: false,
+    tags: ["Children", "Stories", "Interactive"],
+  },
+  {
+    id: 5,
+    title: "Art & Craft Workshop",
+    description: "Create beautiful handmade bookmarks and learn basic bookbinding techniques. All materials provided.",
+    category: "Art & Culture",
+    date: "2025-01-22",
+    time: "3:00 PM - 5:00 PM",
+    location: "Art Studio",
+    capacity: 12,
+    registered: 8,
+    price: "$5 (materials included)",
+    image: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop&crop=center",
+    featured: false,
+    tags: ["Art", "Craft", "Adults"],
+  },
+  {
+    id: 6,
+    title: "AI and the Future of Libraries",
+    description: "Explore how artificial intelligence is transforming libraries and information services. Panel discussion with industry experts.",
+    category: "Technology",
+    date: "2025-01-28",
+    time: "7:00 PM - 8:30 PM",
+    location: "Conference Room",
+    capacity: 30,
+    registered: 22,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=300&h=200&fit=crop&crop=center",
+    featured: true,
+    tags: ["AI", "Technology", "Future"],
+  },
+  {
+    id: 7,
+    title: "Poetry Reading Night",
+    description: "Share your original poetry or read your favorite poems. Open mic format with featured local poets.",
+    category: "Community",
+    date: "2025-01-30",
+    time: "7:30 PM - 9:00 PM",
+    location: "Main Reading Room",
+    capacity: 40,
+    registered: 28,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center",
+    featured: false,
+    tags: ["Poetry", "Community", "Open Mic"],
+  },
+  {
+    id: 8,
+    title: "Genealogy Research Workshop",
+    description: "Learn how to trace your family history using library resources and online databases. Bring your family photos!",
+    category: "Workshop",
+    date: "2025-02-01",
+    time: "1:00 PM - 3:00 PM",
+    location: "Research Room",
+    capacity: 18,
+    registered: 14,
+    price: "Free",
+    image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300&h=200&fit=crop&crop=center",
+    featured: false,
+    tags: ["Research", "Family History", "Adults"],
+  },
+]
 
 export default function EventsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -35,379 +155,273 @@ export default function EventsPage() {
 
   const categories = ["All", "Book Club", "Workshop", "Author Talk", "Children's Program", "Technology", "Art & Culture", "Community"]
 
-  const events = [
-    {
-      id: 1,
-      title: "Monthly Book Club Discussion",
-      description: "Join us for our monthly book club discussion of 'The Midnight Library' by Matt Haig. Light refreshments will be provided.",
-      category: "Book Club",
-      date: "2025-01-15",
-      time: "7:00 PM - 8:30 PM",
-      location: "Main Reading Room",
-      capacity: 25,
-      registered: 18,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300&h=200&fit=crop&crop=center",
-      featured: true,
-      tags: ["Fiction", "Discussion", "Adults"],
-    },
-    {
-      id: 2,
-      title: "Digital Literacy Workshop",
-      description: "Learn essential computer skills including email, internet browsing, and basic Microsoft Office applications. Perfect for beginners.",
-      category: "Workshop",
-      date: "2025-01-18",
-      time: "2:00 PM - 4:00 PM",
-      location: "Computer Lab",
-      capacity: 15,
-      registered: 12,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center",
-      featured: false,
-      tags: ["Technology", "Education", "All Ages"],
-    },
-    {
-      id: 3,
-      title: "Author Meet & Greet: Shivan Abenaitwe",
-      description: "Meet bestselling author Shivan Abenaitwe as she discusses her latest novel and answers questions from the audience.",
-      category: "Author Talk",
-      date: "2025-01-22",
-      time: "6:00 PM - 7:30 PM",
-      location: "Auditorium",
-      capacity: 100,
-      registered: 67,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=center",
-      featured: true,
-      tags: ["Author", "Q&A", "Adults"],
-    },
-    {
-      id: 4,
-      title: "Children's Story Time",
-      description: "Interactive story time for children ages 3-8 featuring classic tales and new favorites. Parents welcome to stay.",
-      category: "Children's Program",
-      date: "2025-01-20",
-      time: "10:30 AM - 11:15 AM",
-      location: "Children's Section",
-      capacity: 30,
-      registered: 22,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=300&h=200&fit=crop&crop=center",
-      featured: false,
-      tags: ["Children", "Stories", "Interactive"],
-    },
-    {
-      id: 5,
-      title: "Art & Craft Workshop",
-      description: "Create beautiful watercolor paintings with local artist Maria Rodriguez. All materials provided. No experience necessary.",
-      category: "Art & Culture",
-      date: "2025-01-25",
-      time: "1:00 PM - 3:00 PM",
-      location: "Community Room",
-      capacity: 20,
-      registered: 15,
-      price: "$15",
-      image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=300&h=200&fit=crop&crop=center",
-      featured: false,
-      tags: ["Art", "Craft", "Adults"],
-    },
-    {
-      id: 6,
-      title: "Tech Talk: AI in Everyday Life",
-      description: "Explore how artificial intelligence is changing our daily lives and what it means for the future. Interactive presentation with Q&A.",
-      category: "Technology",
-      date: "2025-01-28",
-      time: "3:00 PM - 4:30 PM",
-      location: "Conference Room",
-      capacity: 40,
-      registered: 28,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center",
-      featured: true,
-      tags: ["AI", "Technology", "Future"],
-    },
-    {
-      id: 7,
-      title: "Community Poetry Reading",
-      description: "Share your original poetry or read your favorite poems in a supportive community setting. Open mic format.",
-      category: "Community",
-      date: "2025-01-30",
-      time: "7:00 PM - 9:00 PM",
-      location: "Café Area",
-      capacity: 35,
-      registered: 19,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=200&fit=crop&crop=center",
-      featured: false,
-      tags: ["Poetry", "Community", "Open Mic"],
-    },
-    {
-      id: 8,
-      title: "Genealogy Research Workshop",
-      description: "Learn how to trace your family history using online databases and library resources. Bring your family photos and documents.",
-      category: "Workshop",
-      date: "2025-02-02",
-      time: "10:00 AM - 12:00 PM",
-      location: "Research Room",
-      capacity: 12,
-      registered: 8,
-      price: "Free",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=center",
-      featured: false,
-      tags: ["Research", "Family History", "Adults"],
-    },
-  ]
+  const filteredEvents = useMemo(() => {
+    return staticEvents.filter(event => {
+      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      const matchesCategory = selectedCategory === "All" || event.category === selectedCategory
+      
+      const matchesDate = selectedDate === "All" || event.date === selectedDate
+      
+      return matchesSearch && matchesCategory && matchesDate
+    })
+  }, [searchQuery, selectedCategory, selectedDate])
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = selectedCategory === "All" || event.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  const featuredEvents = filteredEvents.filter(event => event.featured)
+  const regularEvents = filteredEvents.filter(event => !event.featured)
 
-  const featuredEvents = events.filter(event => event.featured)
-  const upcomingEvents = events.filter(event => new Date(event.date) >= new Date()).slice(0, 3)
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+  }
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case "Book Club": return BookOpen
-      case "Workshop": return Laptop
-      case "Author Talk": return Mic
-      case "Children's Program": return Camera
-      case "Technology": return Globe
-      case "Art & Culture": return Paintbrush
-      case "Community": return Users
-      default: return Calendar
+      case "Book Club":
+        return <BookOpen className="h-4 w-4" />
+      case "Workshop":
+        return <Coffee className="h-4 w-4" />
+      case "Author Talk":
+        return <Star className="h-4 w-4" />
+      case "Children's Program":
+        return <Music className="h-4 w-4" />
+      default:
+        return <Calendar className="h-4 w-4" />
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Library Events</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">Discover exciting programs, workshops, and community events</p>
-        </div>
-
-        {/* Featured Events */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Featured Events</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredEvents.map((event) => {
-              const CategoryIcon = getCategoryIcon(event.category)
-              return (
-                <Card key={event.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CategoryIcon className="h-5 w-5 text-blue-600" />
-                      <Badge variant="outline">{event.category}</Badge>
-                      <Badge variant="secondary">{event.price}</Badge>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{event.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{event.description}</p>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {event.time}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {event.location}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Users className="h-4 w-4 mr-2" />
-                        {event.registered}/{event.capacity} registered
-                      </div>
-                    </div>
-                    <Button className="w-full">
-                      Register Now
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Library Events
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Discover exciting events, workshops, and programs happening at your local library. 
+              Join our community of learners and book lovers!
+            </p>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Bar */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  type="text"
-                  placeholder="Search events, topics, or categories..."
+                  placeholder="Search events, topics, or tags..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-3"
+                  className="pl-10"
                 />
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                Filters
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Expanded Filters */}
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
-                  <select
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="All">All Dates</option>
-                    <option value="Today">Today</option>
-                    <option value="This Week">This Week</option>
-                    <option value="This Month">This Month</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price</label>
-                  <select className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <option value="All">All Prices</option>
-                    <option value="Free">Free Only</option>
-                    <option value="Paid">Paid Events</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* All Events */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">All Events</h2>
-            <Button variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Suggest Event
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="lg:hidden"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => {
-              const CategoryIcon = getCategoryIcon(event.category)
-              return (
-                <Card key={event.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <div className="aspect-video overflow-hidden">
-                    <img
+          {/* Filter Options */}
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date
+                </label>
+                <select
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="All">All Dates</option>
+                  {Array.from(new Set(staticEvents.map(event => event.date))).map(date => (
+                    <option key={date} value={date}>{formatDate(date)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-gray-600 dark:text-gray-300">
+            Showing {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {/* Featured Events */}
+        {featuredEvents.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+              <Star className="h-6 w-6 mr-2 text-yellow-500" />
+              Featured Events
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {featuredEvents.map(event => (
+                <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative h-48">
+                    <Image
                       src={event.image}
                       alt={event.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover"
                     />
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-yellow-500 text-white">
+                        Featured
+                      </Badge>
+                    </div>
                   </div>
                   <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CategoryIcon className="h-5 w-5 text-blue-600" />
-                      <Badge variant="outline">{event.category}</Badge>
-                      <Badge variant={event.price === "Free" ? "secondary" : "default"}>{event.price}</Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      {getCategoryIcon(event.category)}
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {event.category}
+                      </span>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{event.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{event.description}</p>
-                    <div className="space-y-1 mb-4">
-                      <div className="flex items-center text-sm text-gray-500">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      {event.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                      {event.description}
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                         <Calendar className="h-4 w-4 mr-2" />
-                        {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {formatDate(event.date)}
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                         <Clock className="h-4 w-4 mr-2" />
                         {event.time}
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                         <MapPin className="h-4 w-4 mr-2" />
                         {event.location}
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Users className="h-4 w-4 mr-1" />
-                        {event.registered}/{event.capacity}
-                      </div>
-                      <div className="flex gap-1">
-                        {event.tags.slice(0, 2).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
-                        ))}
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Users className="h-4 w-4 mr-2" />
+                        {event.registered}/{event.capacity} registered
                       </div>
                     </div>
-                    <Button className="w-full" variant={event.registered >= event.capacity ? "secondary" : "default"}>
-                      {event.registered >= event.capacity ? "Waitlist" : "Register"}
-                    </Button>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-green-600">
+                        {event.price}
+                      </span>
+                      <Button>Register</Button>
+                    </div>
                   </CardContent>
                 </Card>
-              )
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Regular Events */}
+        {regularEvents.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              All Events
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {regularEvents.map(event => (
+                <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative h-48">
+                    <Image
+                      src={event.image}
+                      alt={event.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getCategoryIcon(event.category)}
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {event.category}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      {event.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                      {event.description}
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {formatDate(event.date)}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Clock className="h-4 w-4 mr-2" />
+                        {event.time}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {event.location}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Users className="h-4 w-4 mr-2" />
+                        {event.registered}/{event.capacity} registered
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-green-600">
+                        {event.price}
+                      </span>
+                      <Button>Register</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* No Results */}
         {filteredEvents.length === 0 && (
           <div className="text-center py-12">
-            <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No events found</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Try adjusting your search or filter criteria</p>
-            <Button onClick={() => {setSearchQuery(""); setSelectedCategory("All")}}>
-              Clear Filters
-            </Button>
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No events found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Try adjusting your search criteria or check back later for new events.
+            </p>
           </div>
         )}
-
-        {/* Newsletter Signup */}
-        <Card className="bg-blue-600 text-white">
-          <CardContent className="p-8 text-center">
-            <h3 className="text-2xl font-bold mb-4">Stay Updated</h3>
-            <p className="text-blue-100 mb-6">Get notified about new events and programs</p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1"
-              />
-              <Button variant="secondary">Subscribe</Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

@@ -10,9 +10,40 @@ import {
   TrendingUp,
   Clock,
   AlertCircle,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
+
+interface Transaction {
+  _id: string;
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  book: {
+    _id: string;
+    title: string;
+    author: string;
+  };
+  type: string;
+  status: string;
+  borrowDate?: string;
+  dueDate?: string;
+  returnDate?: string;
+  fineAmount?: number;
+  createdAt: string;
+}
+
+interface Book {
+  _id: string;
+  title: string;
+  author: string;
+  isbn: string;
+  category: string;
+  isAvailable: boolean;
+  rating: number;
+  coverImage?: string;
+}
 
 interface DashboardStats {
   totalBooks: number;
@@ -21,8 +52,8 @@ interface DashboardStats {
   overdueBooks: number;
   availableBooks: number;
   borrowedBooks: number;
-  recentTransactions: any[];
-  popularBooks: any[];
+  recentTransactions: Transaction[];
+  popularBooks: Book[];
 }
 
 export default function AdminDashboard() {
@@ -59,12 +90,12 @@ export default function AdminDashboard() {
       const transactionsData = await transactionsResponse.json();
 
       const totalBooks = booksData.books?.length || 0;
-      const availableBooks = booksData.books?.filter((book: any) => book.isAvailable).length || 0;
+      const availableBooks = booksData.books?.filter((book: Book) => book.isAvailable).length || 0;
       const borrowedBooks = totalBooks - availableBooks;
       
       const totalUsers = usersData.users?.length || 0;
-      const activeTransactions = transactionsData.transactions?.filter((t: any) => t.status === 'Active').length || 0;
-      const overdueBooks = transactionsData.transactions?.filter((t: any) => {
+      const activeTransactions = transactionsData.transactions?.filter((t: Transaction) => t.status === 'Active').length || 0;
+      const overdueBooks = transactionsData.transactions?.filter((t: Transaction) => {
         if (t.status === 'Active' && t.dueDate) {
           return new Date(t.dueDate) < new Date();
         }
@@ -72,7 +103,7 @@ export default function AdminDashboard() {
       }).length || 0;
 
       const recentTransactions = transactionsData.transactions?.slice(0, 5) || [];
-      const popularBooks = booksData.books?.sort((a: any, b: any) => b.rating - a.rating).slice(0, 5) || [];
+      const popularBooks = booksData.books?.sort((a: Book, b: Book) => b.rating - a.rating).slice(0, 5) || [];
 
       setStats({
         totalBooks,
@@ -86,6 +117,17 @@ export default function AdminDashboard() {
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Set default values if API fails
+      setStats({
+        totalBooks: 0,
+        totalUsers: 0,
+        activeTransactions: 0,
+        overdueBooks: 0,
+        availableBooks: 0,
+        borrowedBooks: 0,
+        recentTransactions: [],
+        popularBooks: []
+      });
     } finally {
       setLoading(false);
     }
@@ -249,21 +291,36 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/admin/books/add'}
+            >
               <BookOpen className="h-6 w-6" />
               <span>Add New Book</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/admin/users/add'}
+            >
               <Users className="h-6 w-6" />
               <span>Add New User</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/admin/transactions'}
+            >
               <FileText className="h-6 w-6" />
-              <span>Process Return</span>
+              <span>View Transactions</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => window.location.href = '/admin/books'}
+            >
               <TrendingUp className="h-6 w-6" />
-              <span>Generate Report</span>
+              <span>Manage Books</span>
             </Button>
           </div>
         </CardContent>

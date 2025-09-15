@@ -1,6 +1,7 @@
 "use client";
 import ReduxProvider from "./ReduxProvider";
 import { NotificationProvider } from "./NotificationContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 
 
@@ -8,11 +9,12 @@ import { NotificationProvider } from "./NotificationContext";
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
-
-          <NotificationProvider>
-              <ReduxProvider>
-                      {children}
-              </ReduxProvider>
-          </NotificationProvider>
+          <AuthProvider>
+            <NotificationProvider>
+                <ReduxProvider>
+                        {children}
+                </ReduxProvider>
+            </NotificationProvider>
+          </AuthProvider>
   );
 }

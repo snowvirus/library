@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 
 interface Transaction {
@@ -68,20 +69,22 @@ export default function TransactionsPage() {
     total: 0,
     pages: 0
   });
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
 
   const statuses = ['Active', 'Completed', 'Overdue', 'Cancelled'];
   const types = ['Borrow', 'Return', 'Reserve', 'Cancel Reserve', 'Fine'];
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [currentPage, searchTerm, statusFilter, typeFilter]);
+  // Debounced search
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(statusFilter && { status: statusFilter }),
         ...(typeFilter && { type: typeFilter })
       });
@@ -89,6 +92,7 @@ export default function TransactionsPage() {
       const response = await fetch(`/api/admin/transactions?${params}`);
       const data: TransactionsResponse = await response.json();
       
+      console.log('Fetched transactions:', data.transactions?.length, 'Total:', data.pagination?.total);
       setTransactions(data.transactions);
       setPagination(data.pagination);
     } catch (error) {
@@ -96,22 +100,102 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, debouncedSearchTerm, statusFilter, typeFilter]);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, typeFilter]);
 
   const handleProcessReturn = async (transactionId: string) => {
+    if (!confirm('Are you sure you want to process this return?')) return;
+    
     try {
       const response = await fetch(`/api/admin/transactions/${transactionId}/return`, {
         method: 'POST'
       });
       
       if (response.ok) {
+        const data = await response.json();
+        alert(data.message || 'Book returned successfully');
         fetchTransactions();
       } else {
-        alert('Failed to process return');
+        const error = await response.json();
+        alert(error.error || 'Failed to process return');
       }
     } catch (error) {
       console.error('Error processing return:', error);
       alert('Failed to process return');
+    }
+  };
+
+  const handleViewTransaction = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowTransactionModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowTransactionModal(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleCancelReservation = async (transactionId: string) => {
+    if (!confirm('Are you sure you want to cancel this reservation?')) return;
+    
+    try {
+      const response = await fetch(`/api/admin/transactions/${transactionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'Cancelled',
+          type: 'Cancel Reserve'
+        })
+      });
+      
+      if (response.ok) {
+        alert('Reservation cancelled successfully');
+        fetchTransactions();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to cancel reservation');
+      }
+    } catch (error) {
+      console.error('Error cancelling reservation:', error);
+      alert('Failed to cancel reservation');
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) return;
+    
+    try {
+      const response = await fetch(`/api/admin/transactions/${transactionId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        alert('Transaction deleted successfully');
+        fetchTransactions();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete transaction');
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction');
     }
   };
 
@@ -285,7 +369,11 @@ export default function TransactionsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-2 ml-4">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleViewTransaction(transaction)}
+                  >
                     <Eye className="h-4 w-4 mr-1" />
                     View
                   </Button>
@@ -298,6 +386,23 @@ export default function TransactionsPage() {
                       Process Return
                     </Button>
                   )}
+                  {transaction.type === 'Reserve' && transaction.status === 'Active' && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleCancelReservation(transaction._id)}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Cancel Reserve
+                    </Button>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleDeleteTransaction(transaction._id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -347,6 +452,134 @@ export default function TransactionsPage() {
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Details Modal */}
+      {showTransactionModal && selectedTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Transaction Details</h2>
+              <Button variant="outline" onClick={handleCloseModal}>
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">User Information</h3>
+                  <div className="space-y-1">
+                    <p><span className="font-medium">Name:</span> {selectedTransaction.user.firstName} {selectedTransaction.user.lastName}</p>
+                    <p><span className="font-medium">Email:</span> {selectedTransaction.user.email}</p>
+                    <p><span className="font-medium">Member ID:</span> {selectedTransaction.user.membershipId}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Book Information</h3>
+                  <div className="space-y-1">
+                    <p><span className="font-medium">Title:</span> {selectedTransaction.book.title}</p>
+                    <p><span className="font-medium">Author:</span> {selectedTransaction.book.author}</p>
+                    <p><span className="font-medium">ISBN:</span> {selectedTransaction.book.isbn}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Transaction Details</h3>
+                  <div className="space-y-1">
+                    <p><span className="font-medium">Type:</span> 
+                      <Badge className={`ml-2 ${getTypeBadgeColor(selectedTransaction.type)}`}>
+                        {selectedTransaction.type}
+                      </Badge>
+                    </p>
+                    <p><span className="font-medium">Status:</span> 
+                      <Badge className={`ml-2 ${getStatusBadgeColor(selectedTransaction.status)}`}>
+                        {selectedTransaction.status}
+                      </Badge>
+                    </p>
+                    <p><span className="font-medium">Created:</span> {new Date(selectedTransaction.createdAt).toLocaleString()}</p>
+                    <p><span className="font-medium">Updated:</span> {new Date(selectedTransaction.updatedAt).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Dates & Fines</h3>
+                  <div className="space-y-1">
+                    {selectedTransaction.borrowDate && (
+                      <p><span className="font-medium">Borrowed:</span> {new Date(selectedTransaction.borrowDate).toLocaleDateString()}</p>
+                    )}
+                    {selectedTransaction.dueDate && (
+                      <p><span className="font-medium">Due:</span> 
+                        <span className={isOverdue(selectedTransaction.dueDate) ? 'text-red-600 font-semibold ml-1' : 'ml-1'}>
+                          {new Date(selectedTransaction.dueDate).toLocaleDateString()}
+                        </span>
+                      </p>
+                    )}
+                    {selectedTransaction.returnDate && (
+                      <p><span className="font-medium">Returned:</span> {new Date(selectedTransaction.returnDate).toLocaleDateString()}</p>
+                    )}
+                    {selectedTransaction.fineAmount && selectedTransaction.fineAmount > 0 && (
+                      <p><span className="font-medium">Fine:</span> 
+                        <span className="text-red-600 font-semibold ml-1">${selectedTransaction.fineAmount.toFixed(2)}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {selectedTransaction.notes && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded">{selectedTransaction.notes}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-between mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  handleDeleteTransaction(selectedTransaction._id);
+                  handleCloseModal();
+                }}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Close
+                </Button>
+                {selectedTransaction.type === 'Borrow' && selectedTransaction.status === 'Active' && (
+                  <Button 
+                    onClick={() => {
+                      handleProcessReturn(selectedTransaction._id);
+                      handleCloseModal();
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Process Return
+                  </Button>
+                )}
+                {selectedTransaction.type === 'Reserve' && selectedTransaction.status === 'Active' && (
+                  <Button 
+                    onClick={() => {
+                      handleCancelReservation(selectedTransaction._id);
+                      handleCloseModal();
+                    }}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Cancel Reserve
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

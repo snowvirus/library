@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -67,11 +67,7 @@ export default function UsersPage() {
 
   const membershipTypes = ['Basic', 'Premium', 'Student', 'Senior'];
 
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm, membershipFilter, statusFilter]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -92,7 +88,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, membershipFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleDelete = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;

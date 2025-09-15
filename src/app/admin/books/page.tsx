@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 import { 
   BookOpen, 
   Search, 
@@ -15,7 +16,8 @@ import {
   Download,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -42,15 +44,6 @@ interface Book {
   updatedAt: string;
 }
 
-interface BooksResponse {
-  books: Book[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-}
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -59,12 +52,10 @@ export default function BooksPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0
-  });
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBooks, setTotalBooks] = useState(0);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [showBookModal, setShowBookModal] = useState(false);
 
   const categories = [
     'Fiction', 'Non-Fiction', 'Biography', 'Science', 'Technology', 
@@ -73,32 +64,35 @@ export default function BooksPage() {
     'Education', 'Reference', 'Children', 'Young Adult'
   ];
 
-  useEffect(() => {
-    fetchBooks();
-  }, [currentPage, searchTerm, categoryFilter, availabilityFilter]);
-
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
-        ...(searchTerm && { search: searchTerm }),
-        ...(categoryFilter && { category: categoryFilter }),
-        ...(availabilityFilter && { isAvailable: availabilityFilter })
+        search: searchTerm,
+        category: categoryFilter,
+        isAvailable: availabilityFilter
       });
 
       const response = await fetch(`/api/admin/books?${params}`);
-      const data: BooksResponse = await response.json();
+      const data = await response.json();
       
-      setBooks(data.books);
-      setPagination(data.pagination);
+      console.log('Fetched books:', data.books?.length, 'Total:', data.pagination?.total);
+      setBooks(data.books || []);
+      setTotalBooks(data.pagination?.total || 0);
+      setTotalPages(Math.ceil((data.pagination?.total || 0) / 10));
     } catch (error) {
       console.error('Error fetching books:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, categoryFilter, availabilityFilter]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
+
 
   const handleDelete = async (bookId: string) => {
     if (!confirm('Are you sure you want to delete this book?')) return;
@@ -109,9 +103,11 @@ export default function BooksPage() {
       });
       
       if (response.ok) {
+        alert('Book deleted successfully');
         fetchBooks();
       } else {
-        alert('Failed to delete book');
+        const error = await response.json();
+        alert(error.error || 'Failed to delete book');
       }
     } catch (error) {
       console.error('Error deleting book:', error);
@@ -119,13 +115,38 @@ export default function BooksPage() {
     }
   };
 
+  const handleViewBook = (book: Book) => {
+    setSelectedBook(book);
+    setShowBookModal(true);
+  };
+
+  const handleEditBook = (book: Book) => {
+    // Navigate to edit page with book data
+    window.location.href = `/admin/books/edit/${book._id}`;
+  };
+
   const handleDownload = (book: Book) => {
     if (book.fileUrl) {
-      window.open(book.fileUrl, '_blank');
-    } else {
-      alert('No download file available for this book');
+      if (book.fileUrl.startsWith('blob:')) {
+        // For blob URLs, create a download link
+        const link = document.createElement('a');
+        link.href = book.fileUrl;
+        link.download = `${book.title}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For external URLs, open in new tab
+        window.open(book.fileUrl, '_blank');
+      }
     }
   };
+
+  const handleCloseModal = () => {
+    setShowBookModal(false);
+    setSelectedBook(null);
+  };
+
 
   if (loading) {
     return (
@@ -140,7 +161,7 @@ export default function BooksPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Books Management</h1>
-          <p className="text-gray-600">Manage your library's book collection</p>
+          <p className="text-gray-600">Manage your librarys book collection</p>
         </div>
         <Link href="/admin/books/add">
           <Button>
@@ -186,6 +207,12 @@ export default function BooksPage() {
               <Filter className="h-4 w-4 mr-2" />
               Apply Filters
             </Button>
+            <Button variant="outline" onClick={() => {
+              console.log('Manual refresh triggered');
+              fetchBooks();
+            }}>
+              Refresh
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -214,11 +241,26 @@ export default function BooksPage() {
                   </div>
                 </div>
                 {book.coverImage && (
-                  <img
-                    src={book.coverImage}
-                    alt={book.title}
-                    className="w-16 h-20 object-cover rounded"
-                  />
+                  <div className="w-16 h-20 bg-gray-200 rounded flex items-center justify-center">
+                    {book.coverImage.startsWith('blob:') ? (
+                      <Image
+                        src={book.coverImage}
+                        alt={book.title}
+                        width={64}
+                        height={80}
+                        className="w-full h-full object-cover rounded"
+                        unoptimized
+                      />
+                    ) : (
+                      <Image
+                        src={book.coverImage}
+                        alt={book.title}
+                        width={64}
+                        height={80}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -242,11 +284,21 @@ export default function BooksPage() {
               </p>
 
               <div className="flex space-x-2">
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleViewBook(book)}
+                >
                   <Eye className="h-4 w-4 mr-1" />
                   View
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleEditBook(book)}
+                >
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
@@ -297,12 +349,12 @@ export default function BooksPage() {
       )}
 
       {/* Pagination */}
-      {pagination.pages > 1 && (
+      {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-            {pagination.total} results
+            Showing {((currentPage - 1) * 10) + 1} to{' '}
+            {Math.min(currentPage * 10, totalBooks)} of{' '}
+            {totalBooks} results
           </div>
           <div className="flex space-x-2">
             <Button
@@ -318,11 +370,88 @@ export default function BooksPage() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === pagination.pages}
+              disabled={currentPage === totalPages}
             >
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Book Details Modal */}
+      {showBookModal && selectedBook && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Book Details</h2>
+              <Button variant="outline" onClick={handleCloseModal}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Title:</span> {selectedBook.title}</p>
+                  <p><span className="font-medium">Author:</span> {selectedBook.author}</p>
+                  <p><span className="font-medium">ISBN:</span> {selectedBook.isbn}</p>
+                  <p><span className="font-medium">Category:</span> {selectedBook.category}</p>
+                  <p><span className="font-medium">Publisher:</span> {selectedBook.publisher}</p>
+                  <p><span className="font-medium">Published Year:</span> {selectedBook.publishedYear}</p>
+                  <p><span className="font-medium">Language:</span> {selectedBook.language}</p>
+                  <p><span className="font-medium">Pages:</span> {selectedBook.pages}</p>
+                  <p><span className="font-medium">Rating:</span> {selectedBook.rating}/5</p>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Availability & Status</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Total Copies:</span> {selectedBook.totalCopies}</p>
+                  <p><span className="font-medium">Available Copies:</span> {selectedBook.availableCopies}</p>
+                  <p><span className="font-medium">Status:</span> 
+                    <Badge className={`ml-2 ${selectedBook.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {selectedBook.isAvailable ? 'Available' : 'Unavailable'}
+                    </Badge>
+                  </p>
+                  <p><span className="font-medium">Digital:</span> 
+                    <Badge className={`ml-2 ${selectedBook.isDigital ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {selectedBook.isDigital ? 'Yes' : 'No'}
+                    </Badge>
+                  </p>
+                  <p><span className="font-medium">Created:</span> {new Date(selectedBook.createdAt).toLocaleDateString()}</p>
+                  <p><span className="font-medium">Updated:</span> {new Date(selectedBook.updatedAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded">{selectedBook.description}</p>
+            </div>
+            
+            {selectedBook.tags && selectedBook.tags.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedBook.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={handleCloseModal}>
+                Close
+              </Button>
+              <Button onClick={() => handleEditBook(selectedBook)}>
+                <Edit className="h-4 w-4 mr-1" />
+                Edit Book
+              </Button>
+            </div>
           </div>
         </div>
       )}

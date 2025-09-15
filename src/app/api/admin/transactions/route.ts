@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/models/Transaction';
 import Book from '@/models/Book';
-import User from '@/models/User';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,8 +12,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status') || '';
     const type = searchParams.get('type') || '';
+    const search = searchParams.get('search') || '';
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     
     if (status) {
       query.status = status;
@@ -22,6 +22,114 @@ export async function GET(request: NextRequest) {
     
     if (type) {
       query.type = type;
+    }
+    
+    if (search) {
+      // Search in user and book details using aggregation
+      const searchQuery = await Transaction.aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'userDetails'
+          }
+        },
+        {
+          $lookup: {
+            from: 'books',
+            localField: 'book',
+            foreignField: '_id',
+            as: 'bookDetails'
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { 'userDetails.firstName': { $regex: search, $options: 'i' } },
+              { 'userDetails.lastName': { $regex: search, $options: 'i' } },
+              { 'userDetails.email': { $regex: search, $options: 'i' } },
+              { 'userDetails.membershipId': { $regex: search, $options: 'i' } },
+              { 'bookDetails.title': { $regex: search, $options: 'i' } },
+              { 'bookDetails.author': { $regex: search, $options: 'i' } },
+              { 'bookDetails.isbn': { $regex: search, $options: 'i' } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $lookup: {
+            from: 'books',
+            localField: 'book',
+            foreignField: '_id',
+            as: 'book'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $unwind: '$book'
+        },
+        {
+          $skip: (page - 1) * limit
+        },
+        {
+          $limit: limit
+        }
+      ]);
+      
+      const total = await Transaction.aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'userDetails'
+          }
+        },
+        {
+          $lookup: {
+            from: 'books',
+            localField: 'book',
+            foreignField: '_id',
+            as: 'bookDetails'
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { 'userDetails.firstName': { $regex: search, $options: 'i' } },
+              { 'userDetails.lastName': { $regex: search, $options: 'i' } },
+              { 'userDetails.email': { $regex: search, $options: 'i' } },
+              { 'userDetails.membershipId': { $regex: search, $options: 'i' } },
+              { 'bookDetails.title': { $regex: search, $options: 'i' } },
+              { 'bookDetails.author': { $regex: search, $options: 'i' } },
+              { 'bookDetails.isbn': { $regex: search, $options: 'i' } }
+            ]
+          }
+        },
+        {
+          $count: 'total'
+        }
+      ]);
+      
+      return NextResponse.json({
+        transactions: searchQuery,
+        pagination: {
+          page,
+          limit,
+          total: total[0]?.total || 0,
+          pages: Math.ceil((total[0]?.total || 0) / limit)
+        }
+      });
     }
 
     const skip = (page - 1) * limit;
