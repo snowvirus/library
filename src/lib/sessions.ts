@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import { SessionPayload } from '../lib/types'
 import { cookies } from 'next/headers'
 // import { redirect } from 'next/navigation'
- 
+
 const secretKey = process.env.SESSION_SECRET
 const encodedKey = new TextEncoder().encode(secretKey)
  
