@@ -1,17 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
+import Image from "next/image"
 import {
   BookOpen,
   Download,
   Laptop,
   Calendar,
   Users,
-  Clock,
   MapPin,
   Phone,
   Mail,
@@ -24,22 +22,57 @@ import {
   ScanLine,
   Mic,
   Video,
-  FileText,
-  Database,
   Search,
   ArrowRight,
   CheckCircle,
   Star,
-  Award,
-  Shield,
   Heart,
-  Lightbulb,
-  Target,
-  Zap,
+  Loader2,
 } from "lucide-react"
 
 export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState("all")
+  const [stats, setStats] = useState({
+    totalBooks: 0,
+    availableBooks: 0,
+    totalUsers: 0,
+    digitalBooks: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchLibraryStats()
+  }, [])
+
+  const fetchLibraryStats = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch books data
+      const booksResponse = await fetch('/api/admin/books?limit=1000')
+      const booksData = await booksResponse.json()
+      
+      // Fetch users data
+      const usersResponse = await fetch('/api/admin/users?limit=1000')
+      const usersData = await usersResponse.json()
+
+      const totalBooks = booksData.books?.length || 0
+      const availableBooks = booksData.books?.filter((book: { isAvailable: boolean }) => book.isAvailable).length || 0
+      const digitalBooks = booksData.books?.filter((book: { isDigital: boolean }) => book.isDigital).length || 0
+      const totalUsers = usersData.users?.length || 0
+
+      setStats({
+        totalBooks,
+        availableBooks,
+        totalUsers,
+        digitalBooks
+      })
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const services = [
     {
@@ -161,7 +194,7 @@ export default function ServicesPage() {
     {
       name: "Shivan Abenaitwe",
       role: "Student",
-      content: "The library's study spaces are perfect for my research. The quiet zones help me focus, and the staff is always helpful with finding resources.",
+      content: "The library&apos;s study spaces are perfect for my research. The quiet zones help me focus, and the staff is always helpful with finding resources.",
       rating: 5,
       image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face"
     },
@@ -208,6 +241,48 @@ export default function ServicesPage() {
           </p>
         </div>
 
+        {/* Library Statistics */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin mr-2" />
+            <span>Loading library statistics...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <BookOpen className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{stats.totalBooks}</div>
+                <div className="text-sm text-gray-600">Total Books</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{stats.availableBooks}</div>
+                <div className="text-sm text-gray-600">Available Now</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <Download className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{stats.digitalBooks}</div>
+                <div className="text-sm text-gray-600">Digital Books</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="text-center">
+              <CardContent className="p-6">
+                <Users className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{stats.totalUsers}</div>
+                <div className="text-sm text-gray-600">Active Members</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Service Filter */}
         <div className="flex flex-wrap justify-center gap-2 mb-12">
           <Button
@@ -236,9 +311,11 @@ export default function ServicesPage() {
             return (
               <Card key={service.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
                 <div className="aspect-video overflow-hidden">
-                  <img
+                  <Image
                     src={service.image}
                     alt={service.title}
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
@@ -300,9 +377,11 @@ export default function ServicesPage() {
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="p-6">
                 <div className="flex items-center mb-4">
-                  <img
+                  <Image
                     src={testimonial.image}
                     alt={testimonial.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full mr-4"
                   />
                   <div>
@@ -315,7 +394,7 @@ export default function ServicesPage() {
                     <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 italic">"{testimonial.content}"</p>
+                <p className="text-gray-600 dark:text-gray-300 italic">&ldquo;{testimonial.content}&rdquo;</p>
               </Card>
             ))}
           </div>
@@ -351,7 +430,7 @@ export default function ServicesPage() {
                   <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4">
                     <Heart className="h-10 w-10" />
                   </div>
-                  <h4 className="text-xl font-semibold mb-2">We're Here for You</h4>
+                  <h4 className="text-xl font-semibold mb-2">We&apos;re Here for You</h4>
                   <p className="text-blue-100">Monday - Friday: 8AM - 10PM</p>
                   <p className="text-blue-100">Saturday - Sunday: 9AM - 8PM</p>
                 </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import Footer from "@/components/Footer/footer";
 import Header from "@/components/Header/header";
 import Providers from "./Providers";
+import AdminRedirect from "@/components/AdminRedirect";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,6 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
+        <AdminRedirect />
         <Header/>
         {children}
         <Footer/>

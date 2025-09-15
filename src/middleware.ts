@@ -1,51 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { decrypt } from "../src/lib/sessions"
-import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import jwt from 'jsonwebtoken';
 
-const isProtected = [
-        '/post',
-        '/profile',
-        "/admin",
-        "/register",
-        "/sudo",
-        
-]
-const publicRoutes = ['/sign-in', '/sign-up']
-const RoleProtected = ['/admin(.*)', '/sudo(.*)', ];
-const Middleware = async (req: NextRequest) => {
-        
-        const path = req.nextUrl.pathname
-        const isProtectedPath = isProtected.some(route => path.startsWith(route));
-        const isPublicRoute = publicRoutes.includes(path)
-        const isRoleProtected = RoleProtected.some((pattern) => new RegExp(pattern).test(path));
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-make-it-long-and-random';
 
-        const cookie = (await cookies()).get("session")?.value
-        // console.log("session",cookie)
-        const session = cookie ?await decrypt(cookie):null
-        
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token')?.value || 
+                request.headers.get('authorization')?.replace('Bearer ', '');
 
-        if(isProtectedPath && !session){
-                return NextResponse.redirect(new URL('/sign-in', req.url))
-        }
-        if(
-                isRoleProtected && (session?.role !== "seller" && session?.role !== "admin")){
-                        return NextResponse.redirect(new URL('/unauthorized', req.url));
-                }
+  // Admin routes that require admin authentication
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
-        if (isPublicRoute && session?.userId && req.nextUrl.pathname != '/') {
-                return NextResponse.redirect(new URL('/', req.nextUrl))
+  if (isAdminRoute) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/sign-in?redirect=/admin', request.url));
+    }
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { isAdmin: boolean };
+      
+      if (!decoded.isAdmin) {
+        return NextResponse.redirect(new URL('/sign-in?error=unauthorized', request.url));
+      }
+    } catch (error) {
+      return NextResponse.redirect(new URL('/sign-in?error=invalid_token', request.url));
+    }
   }
- 
-  return NextResponse.next()
-}
 
-export default Middleware;
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
-  ],
+    '/admin/:path*',
+    '/account/:path*'
+  ]
 };

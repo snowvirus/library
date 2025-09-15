@@ -1,8 +1,7 @@
 import {createSlice} from "@reduxjs/toolkit"
-import { Id } from "../../convex/_generated/dataModel";
 
 interface CartItem {
-        product_id: Id<"products">;
+        product_id: string;
         quantity: number;
         cart_Owner_id?: string;
 }
