@@ -30,15 +30,17 @@ export default function LoginForm() {
     const result = await login(email, password);
     
     if (result.success) {
-      // Wait a moment for the auth context to update
+      // Clear any error messages
+      setError('');
+      
+      // Wait for auth context to update, then redirect
       setTimeout(() => {
-        // Check if user is admin and redirect accordingly
         if (result.user?.isAdmin) {
           router.push('/admin');
         } else {
           router.push(redirect);
         }
-      }, 100);
+      }, 200);
     } else {
       setError(result.message);
     }
