@@ -107,7 +107,7 @@ export default function ServicesPage() {
         "Offline reading"
       ],
       stats: "25,000+ digital resources",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=300&fit=crop&crop=center"
+      image: "https://www.sydle.com/blog/assets/post/digital-library-63e521409e3c274f1050e336/capa%20biblioteca%20digital.png"
     },
     {
       id: "study",

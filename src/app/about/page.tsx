@@ -118,7 +118,7 @@ export default function AboutPage() {
       name: "Elia Akatwijuka",
       role: "Research Librarian",
       bio: "David helps researchers and students navigate our extensive collection and academic databases.",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
+      image: "https://www.pen2print.org/2017/04/role-of-digital-libraries-in-present.html",
       specialties: ["Research Support", "Academic Resources", "Information Literacy"]
     }
   ]
