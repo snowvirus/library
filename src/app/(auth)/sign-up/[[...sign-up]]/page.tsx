@@ -14,7 +14,7 @@ const Signup = () => {
         <div className="relative hidden lg:block">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
           <Image
-            src="/images/logo2.png"
+            src="/images/logo.png"
             alt="CityLibrary"
             width={600}
             height={800}
