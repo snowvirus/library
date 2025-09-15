@@ -158,7 +158,7 @@ export default function ServicesPage() {
         "Genealogy resources"
       ],
       stats: "100+ databases available",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBx6jhBM82aKt54VEHobrwoYEtRj-gmTVlPQ&s"
+      image: "https://m.media-amazon.com/images/I/71NG5d07G2S._AC_UF1000,1000_QL80_.jpg"
     },
     {
       id: "technology",
@@ -175,7 +175,7 @@ export default function ServicesPage() {
         "Tech support"
       ],
       stats: "50+ computers available",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBx6jhBM82aKt54VEHobrwoYEtRj-gmTVlPQ&s"
+      image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=300&fit=crop&crop=center"
     }
   ]
 
@@ -196,22 +196,21 @@ export default function ServicesPage() {
       role: "Student",
       content: "The library&apos;s study spaces are perfect for my research. The quiet zones help me focus, and the staff is always helpful with finding resources.",
       rating: 5,
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmSQY8fz_eB0kLJoZH0Cq26PTX4ouQ4NK_nQ&s"
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face"
     },
     {
-      name: "Mutebi samuel",
+      name: "Snow Virus",
       role: "Researcher",
       content: "The digital library has been invaluable for my work. I can access academic databases and e-books from anywhere, and the research support is excellent.",
       rating: 5,
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmSQY8fz_eB0kLJoZH0Cq26PTX4ouQ4NK_nQ&s"
-      
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
     },
     {
       name: "Jay Oabs",
       role: "Parent",
       content: "My kids love the children's programs and story time. The library has become our weekly destination for learning and fun activities.",
       rating: 5,
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmSQY8fz_eB0kLJoZH0Cq26PTX4ouQ4NK_nQ&s"
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
     }
   ]
 
