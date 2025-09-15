@@ -107,7 +107,7 @@ export default function CatalogPage() {
       setLoading(true)
       const response = await fetch('/api/admin/books?limit=1000')
       const data = await response.json()
-      setBooks(data.books || [])
+      setBooks(data.books.filter((book:Book)=>book.isAvailable) || [])
     } catch (error) {
       console.error('Error fetching books:', error)
     } finally {
